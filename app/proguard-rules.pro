@@ -1,0 +1,2 @@
+-keep class com.framestudio.app.data.** { *; }
+-keepattributes *Annotation*
