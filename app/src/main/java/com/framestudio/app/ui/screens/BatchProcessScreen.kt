@@ -20,10 +20,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.framestudio.app.R
+import com.framestudio.app.imaging.ExportQuality
 import com.framestudio.app.viewmodel.ActionViewModel
 import com.framestudio.app.viewmodel.BatchViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun BatchProcessScreen(
     batchViewModel: BatchViewModel,
@@ -118,6 +119,38 @@ fun BatchProcessScreen(
                         }
                     }
                 }
+            }
+
+            Spacer(Modifier.height(24.dp))
+            Text(stringResource(R.string.quality_title), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                stringResource(R.string.quality_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+            )
+            Spacer(Modifier.height(8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = state.quality == ExportQuality.LOW,
+                    onClick = { batchViewModel.setQuality(ExportQuality.LOW) },
+                    label = { Text(stringResource(R.string.quality_low)) }
+                )
+                FilterChip(
+                    selected = state.quality == ExportQuality.MEDIUM,
+                    onClick = { batchViewModel.setQuality(ExportQuality.MEDIUM) },
+                    label = { Text(stringResource(R.string.quality_medium)) }
+                )
+                FilterChip(
+                    selected = state.quality == ExportQuality.HIGH,
+                    onClick = { batchViewModel.setQuality(ExportQuality.HIGH) },
+                    label = { Text(stringResource(R.string.quality_high)) }
+                )
+                FilterChip(
+                    selected = state.quality == ExportQuality.MAX,
+                    onClick = { batchViewModel.setQuality(ExportQuality.MAX) },
+                    label = { Text(stringResource(R.string.quality_max)) }
+                )
             }
 
             Spacer(Modifier.weight(1f))
