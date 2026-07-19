@@ -64,4 +64,17 @@
     <string name="tool_magic">تفكيك ذكي</string>
     <string name="back_to_edit">رجوع للتعديل</string>
     <string name="preview_before_export">معاينة قبل التصدير</string>
+    <string name="tool_layers">طبقات</string>
+    <string name="tool_sticker">ملصقات</string>
+    <string name="tool_crop">قص</string>
+    <string name="layers_empty">لا توجد طبقات بعد</string>
+    <string name="layer_opacity">الشفافية</string>
+    <string name="rotate_90">تدوير 90°</string>
+    <string name="filter_original">الأصلية</string>
+    <string name="filter_bw">أبيض وأسود</string>
+    <string name="filter_vivid">حيوي</string>
+    <string name="filter_warm">دافئ</string>
+    <string name="filter_cool">بارد</string>
+    <string name="filter_dramatic">درامي</string>
+    <string name="filter_soft">ناعم</string>
 </resources>
