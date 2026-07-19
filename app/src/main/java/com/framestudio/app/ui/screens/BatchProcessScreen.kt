@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -34,27 +35,28 @@ fun BatchProcessScreen(
     onBack: () -> Unit,
     onFinished: () -> Unit,
     onNeedNewAction: () -> Unit
+) {
+    val state by batchViewModel.uiState.collectAsState()
+    val actions by actionViewModel.actions.collectAsState()
+    var actionMenuExpanded by remember { mutableStateOf(false) }
+    var previewBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val pickPhotos = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(maxItems = 30)
+    ) { uris -> if (uris.isNotEmpty()) batchViewModel.setPhotos(uris) }
+
+    LaunchedEffect(state.resultUris) {
+        if (state.resultUris.isNotEmpty() && !state.isProcessing) onFinished()
+    }
+
     previewBitmap?.let { bmp ->
         PreviewExportDialog(
             bitmap = bmp,
             onExport = { previewBitmap = null; batchViewModel.runBatch() },
             onBackToEdit = { previewBitmap = null }
         )
-    }
-) {
-    val state by batchViewModel.uiState.collectAsState()
-    val actions by actionViewModel.actions.collectAsState()
-    var actionMenuExpanded by remember { mutableStateOf(false) }
-
-    val pickPhotos = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickMultipleVisualMedia(maxItems = 30)
-    ) { uris -> if (uris.isNotEmpty()) batchViewModel.setPhotos(uris) }
-    var previewBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-
-    LaunchedEffect(state.resultUris) {
-        if (state.resultUris.isNotEmpty() && !state.isProcessing) onFinished()
     }
 
     Scaffold(
