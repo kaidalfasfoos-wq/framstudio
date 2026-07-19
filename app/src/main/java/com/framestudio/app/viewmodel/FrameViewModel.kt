@@ -33,7 +33,7 @@ class FrameViewModel(
     fun importFrame(uri: Uri, name: String) {
         viewModelScope.launch {
             val context = getApplication<Application>()
-            val bitmap = ImageProcessor.decodeBitmap(context, uri, maxDimension = 1600)
+            val bitmap = ImageProcessor.decodeBitmap(context, uri, maxDimension = 4500)
             val file = File(framesDir(), "frame_${System.currentTimeMillis()}.png")
             FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
             repository.addFrame(FrameEntity(name = name, filePath = file.absolutePath))
