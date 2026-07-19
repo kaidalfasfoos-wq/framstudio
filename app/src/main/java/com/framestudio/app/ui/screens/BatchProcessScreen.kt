@@ -1,6 +1,8 @@
 package com.framestudio.app.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.framestudio.app.ui.components.PreviewExportDialog
+import kotlinx.coroutines.launch
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -32,6 +34,13 @@ fun BatchProcessScreen(
     onBack: () -> Unit,
     onFinished: () -> Unit,
     onNeedNewAction: () -> Unit
+    previewBitmap?.let { bmp ->
+        PreviewExportDialog(
+            bitmap = bmp,
+            onExport = { previewBitmap = null; batchViewModel.runBatch() },
+            onBackToEdit = { previewBitmap = null }
+        )
+    }
 ) {
     val state by batchViewModel.uiState.collectAsState()
     val actions by actionViewModel.actions.collectAsState()
@@ -40,6 +49,9 @@ fun BatchProcessScreen(
     val pickPhotos = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(maxItems = 30)
     ) { uris -> if (uris.isNotEmpty()) batchViewModel.setPhotos(uris) }
+    var previewBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(state.resultUris) {
         if (state.resultUris.isNotEmpty() && !state.isProcessing) onFinished()
@@ -167,6 +179,12 @@ fun BatchProcessScreen(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             } else {
+                OutlinedButton(
+                    onClick = { scope.launch { previewBitmap = batchViewModel.generatePreview(context) } },
+                    enabled = state.selectedPhotos.isNotEmpty() && state.selectedAction != null,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(stringResource(R.string.preview_before_export)) }
+                Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = { batchViewModel.runBatch() },
                     enabled = state.selectedPhotos.isNotEmpty() && state.selectedAction != null,
