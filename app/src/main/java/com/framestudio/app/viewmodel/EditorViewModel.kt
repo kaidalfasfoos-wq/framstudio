@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.framestudio.app.data.TextLayerData
 import com.framestudio.app.imaging.EraserEngine
+import com.framestudio.app.imaging.ExportQuality
 import com.framestudio.app.imaging.ImageProcessor
 import com.framestudio.app.imaging.LayerRenderer
 import com.framestudio.app.imaging.SubjectSegmenter
@@ -150,8 +151,9 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     fun saveExported(bitmap: Bitmap) {
         viewModelScope.launch {
-            val name = "framestudio_edit_${System.currentTimeMillis()}.jpg"
-            ImageProcessor.saveToGallery(getApplication(), bitmap, name)
+            val quality = ExportQuality.HIGH
+            val name = "framestudio_edit_${System.currentTimeMillis()}.${quality.fileExtension}"
+            ImageProcessor.saveToGallery(getApplication(), bitmap, name, quality)
             _uiState.value = _uiState.value.copy(statusMessage = "تم الحفظ بالمعرض")
         }
     }
