@@ -158,7 +158,7 @@ fun FrameDesignerScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val finalBitmap = FrameRenderer.render(
-                        size = 1080,
+                        size = 4500,
                         borderWidthDp = borderWidth,
                         borderColor = borderColor.toArgb(),
                         cornerStyle = cornerStyle,
