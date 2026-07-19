@@ -3,25 +3,42 @@ package com.framestudio.app.imaging
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import com.framestudio.app.data.TextLayerData
+import com.framestudio.app.data.EditorLayer
 
-/** يدمج كل الطبقات (صورة أساسية + نصوص + إطار اختياري) بصورة واحدة نهائية */
+/** يدمج الصورة الأساسية مع كل الطبقات (نصوص/ملصقات) المرئية بترتيبها الصحيح، فوق إطار اختياري */
 object LayerRenderer {
-    fun flatten(base: Bitmap, textLayers: List<TextLayerData>, frame: Bitmap? = null): Bitmap {
+    fun flatten(base: Bitmap, layers: List<EditorLayer>, frame: Bitmap? = null): Bitmap {
         val result = base.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
 
-        textLayers.forEach { layer ->
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = layer.color
-                textSize = result.width * layer.fontSizeRatio
-                textAlign = Paint.Align.CENTER
-            }
+        layers.filter { it.visible }.forEach { layer ->
+            val alpha = (layer.opacity.coerceIn(0f, 1f) * 255).toInt()
             val x = layer.xRatio * result.width
             val y = layer.yRatio * result.height
+
             canvas.save()
             canvas.rotate(layer.rotationDeg, x, y)
-            canvas.drawText(layer.text, x, y, paint)
+
+            when (layer) {
+                is EditorLayer.TextLayer -> {
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        color = layer.color
+                        this.alpha = alpha
+                        textSize = result.width * layer.fontSizeRatio * layer.scale
+                        textAlign = Paint.Align.CENTER
+                    }
+                    canvas.drawText(layer.text, x, y, paint)
+                }
+                is EditorLayer.StickerLayer -> {
+                    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        this.alpha = alpha
+                        textSize = result.width * layer.sizeRatio * layer.scale
+                        textAlign = Paint.Align.CENTER
+                    }
+                    val fm = paint.fontMetrics
+                    canvas.drawText(layer.emoji, x, y - (fm.ascent + fm.descent) / 2, paint)
+                }
+            }
             canvas.restore()
         }
 
