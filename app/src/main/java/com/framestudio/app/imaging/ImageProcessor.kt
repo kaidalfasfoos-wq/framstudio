@@ -22,7 +22,7 @@ import java.io.OutputStream
 object ImageProcessor {
 
     /** يفك تشفير الصورة مع تصغيرها لتفادي OutOfMemory، ويصحح الدوران حسب EXIF */
-    fun decodeBitmap(context: Context, uri: Uri, maxDimension: Int = 3000): Bitmap {
+    fun decodeBitmap(context: Context, uri: Uri, maxDimension: Int = 4500): Bitmap {
         val input = context.contentResolver.openInputStream(uri)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeStream(input, null, bounds)
