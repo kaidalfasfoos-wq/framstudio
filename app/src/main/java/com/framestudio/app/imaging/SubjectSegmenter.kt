@@ -10,11 +10,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-/**
- * فصل الشخص (الموضوع الرئيسي) عن الخلفية على الجهاز مباشرة عبر ML Kit — بدون إنترنت وبدون مفتاح API.
- * يعمل بشكل أفضل مع الصور اللي فيها أشخاص. إعادة بناء الخلفية بالكامل بالذكاء التوليدي (بعد إزالة
- * الشخص) خطوة مستقبلية تحتاج Gemini API — مو مبنية بهاد الجزء.
- */
+/** فصل الشخص/الموضوع عن الخلفية على الجهاز مباشرة عبر ML Kit — بدون إنترنت وبدون مفتاح API */
 object SubjectSegmenter {
 
     data class Result(val subjectBitmap: Bitmap, val backgroundBitmap: Bitmap)
@@ -51,7 +47,8 @@ object SubjectSegmenter {
 
         buffer.rewind()
         for (i in 0 until maskWidth * maskHeight) {
-            val confidence = buffer.get() // احتمالية أن البكسل جزء من "الشخص" (0..1)
+            // كل بكسل مخزّن كـ float (4 بايت) يمثل احتمالية أن يكون جزء من "الشخص" (0..1)
+            val confidence = buffer.float
             val isForeground = confidence > 0.5f
             val shouldShow = if (keepForeground) isForeground else !isForeground
             if (!shouldShow) pixels[i] = Color.TRANSPARENT
