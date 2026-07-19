@@ -21,6 +21,8 @@ class AppViewModelFactory(private val application: Application) : ViewModelProvi
                 ActionViewModel(repository) as T
             modelClass.isAssignableFrom(BatchViewModel::class.java) ->
                 BatchViewModel(application, repository) as T
+            modelClass.isAssignableFrom(EditorViewModel::class.java) ->
+                EditorViewModel(application) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
