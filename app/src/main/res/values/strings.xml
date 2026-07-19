@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<string name="editor_title">محرر الصور</string>
+    <string name="editor_pick_photo">اختر صورة للتحرير</string>
+    <string name="editor_export">تصدير</string>
+    <string name="add_text">إضافة نص</string>
+    <string name="tool_text">نص</string>
+    <string name="tool_eraser">ممحاة</string>
+    <string name="tool_filters">فلاتر</string>
+    <string name="tool_magic">تفكيك ذكي</string>
+    <string name="back_to_edit">رجوع للتعديل</string>
+    <string name="preview_before_export">معاينة قبل التصدير</string>
 <resources>
     <string name="app_name">Frame Studio</string>
 
