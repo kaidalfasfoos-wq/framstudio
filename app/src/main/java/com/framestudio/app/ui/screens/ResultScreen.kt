@@ -67,7 +67,7 @@ fun ResultScreen(
             OutlinedButton(
                 onClick = {
                     val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-                        type = "image/jpeg"
+                        type = "image/*"
                         putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(state.resultUris))
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
