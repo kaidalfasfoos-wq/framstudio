@@ -11,6 +11,7 @@ import com.framestudio.app.ui.screens.*
 import com.framestudio.app.viewmodel.ActionViewModel
 import com.framestudio.app.viewmodel.AppViewModelFactory
 import com.framestudio.app.viewmodel.BatchViewModel
+import com.framestudio.app.viewmodel.EditorViewModel
 import com.framestudio.app.viewmodel.FrameViewModel
 
 object Routes {
@@ -34,6 +35,7 @@ fun AppNavGraph(factory: AppViewModelFactory) {
     val frameViewModel: FrameViewModel = viewModel(factory = factory)
     val actionViewModel: ActionViewModel = viewModel(factory = factory)
     val batchViewModel: BatchViewModel = viewModel(factory = factory)
+    val editorViewModel: EditorViewModel = viewModel(factory = factory)
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
 
@@ -103,6 +105,13 @@ fun AppNavGraph(factory: AppViewModelFactory) {
             ResultScreen(
                 batchViewModel = batchViewModel,
                 onDone = { navController.popBackStack(Routes.HOME, inclusive = false) }
+            )
+        }
+
+        composable(Routes.EDITOR) {
+            EditorScreen(
+                viewModel = editorViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
     }
