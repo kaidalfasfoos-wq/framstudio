@@ -41,7 +41,7 @@ fun AppNavGraph(factory: AppViewModelFactory) {
             HomeScreen(
                 onOpenFrames = { navController.navigate(Routes.FRAMES) },
                 onOpenActions = { navController.navigate(Routes.ACTIONS) },
-                onOpenBatch = { navController.navigate(Routes.BATCH) }
+                onOpenBatch = { navController.navigate(Routes.BATCH) },
                 onOpenEditor = { navController.navigate(Routes.EDITOR) }
             )
         }
