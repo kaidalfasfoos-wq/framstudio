@@ -19,25 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class BatchUiState(
-    suspend fun generatePreview(context: Context): Bitmap? {
-        val state = _uiState.value
-        val action = state.selectedAction ?: return null
-        val uri = state.selectedPhotos.firstOrNull() ?: return null
-        return withContext(Dispatchers.IO) {
-            var bmp = com.framestudio.app.imaging.ImageProcessor.decodeBitmap(context, uri)
-            bmp = com.framestudio.app.imaging.ImageProcessor.cropToAspect(bmp, action.cropAspect)
-            bmp = com.framestudio.app.imaging.ImageProcessor.adjustColors(bmp, action.brightness, action.contrast, action.saturation)
-            val frameFilePath = action.frameId?.let { repository.getFrame(it)?.filePath }
-            if (frameFilePath != null) {
-                val frameBmp = android.graphics.BitmapFactory.decodeFile(frameFilePath)
-                bmp = com.framestudio.app.imaging.ImageProcessor.applyFrame(bmp, frameBmp)
-            }
-            if (!action.watermarkText.isNullOrBlank()) {
-                bmp = com.framestudio.app.imaging.ImageProcessor.addWatermark(bmp, action.watermarkText)
-            }
-            bmp
-        }
-    }
     val selectedPhotos: List<Uri> = emptyList(),
     val selectedAction: ActionEntity? = null,
     val quality: ExportQuality = ExportQuality.HIGH,
@@ -66,6 +47,27 @@ class BatchViewModel(
 
     fun setQuality(quality: ExportQuality) {
         _uiState.value = _uiState.value.copy(quality = quality)
+    }
+
+    /** يجهّز معاينة سريعة (أول صورة فقط) بعد تطبيق الأكشن المختار، قبل تشغيل معالجة الدفعة الكاملة */
+    suspend fun generatePreview(context: Context): Bitmap? {
+        val state = _uiState.value
+        val action = state.selectedAction ?: return null
+        val uri = state.selectedPhotos.firstOrNull() ?: return null
+        return withContext(Dispatchers.IO) {
+            var bmp = com.framestudio.app.imaging.ImageProcessor.decodeBitmap(context, uri, maxDimension = state.quality.maxDimension)
+            bmp = com.framestudio.app.imaging.ImageProcessor.cropToAspect(bmp, action.cropAspect)
+            bmp = com.framestudio.app.imaging.ImageProcessor.adjustColors(bmp, action.brightness, action.contrast, action.saturation)
+            val frameFilePath = action.frameId?.let { repository.getFrame(it)?.filePath }
+            if (frameFilePath != null) {
+                val frameBmp = android.graphics.BitmapFactory.decodeFile(frameFilePath)
+                bmp = com.framestudio.app.imaging.ImageProcessor.applyFrame(bmp, frameBmp)
+            }
+            if (!action.watermarkText.isNullOrBlank()) {
+                bmp = com.framestudio.app.imaging.ImageProcessor.addWatermark(bmp, action.watermarkText)
+            }
+            bmp
+        }
     }
 
     fun runBatch() {
