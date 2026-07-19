@@ -26,7 +26,8 @@ object BatchProcessor {
         context: Context,
         photoUris: List<Uri>,
         action: ActionEntity,
-        frameFilePath: String?
+        frameFilePath: String?,
+        quality: ExportQuality
     ): Flow<BatchStep> = flow {
         val saved = mutableListOf<Uri>()
         val frameBitmap = frameFilePath?.let { path ->
@@ -34,7 +35,7 @@ object BatchProcessor {
         }
 
         photoUris.forEachIndexed { index, uri ->
-            var bmp = ImageProcessor.decodeBitmap(context, uri)
+            var bmp = ImageProcessor.decodeBitmap(context, uri, maxDimension = quality.maxDimension)
             bmp = ImageProcessor.cropToAspect(bmp, action.cropAspect)
             bmp = ImageProcessor.adjustColors(bmp, action.brightness, action.contrast, action.saturation)
             if (frameBitmap != null) {
@@ -43,8 +44,8 @@ object BatchProcessor {
             if (!action.watermarkText.isNullOrBlank()) {
                 bmp = ImageProcessor.addWatermark(bmp, action.watermarkText)
             }
-            val name = "framestudio_${System.currentTimeMillis()}_$index.jpg"
-            val outUri = ImageProcessor.saveToGallery(context, bmp, name)
+            val name = "framestudio_${System.currentTimeMillis()}_$index.${quality.fileExtension}"
+            val outUri = ImageProcessor.saveToGallery(context, bmp, name, quality)
             saved.add(outUri)
             emit(BatchStep.Progress(index + 1, photoUris.size))
         }
