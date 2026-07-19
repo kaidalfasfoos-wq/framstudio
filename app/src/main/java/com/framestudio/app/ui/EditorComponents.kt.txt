@@ -1,0 +1,155 @@
+package com.framestudio.app.ui.components
+
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoFixNormal
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import com.framestudio.app.R
+import com.framestudio.app.data.TextLayerData
+import com.framestudio.app.viewmodel.EditorTool
+import com.framestudio.app.viewmodel.EditorUiState
+
+@Composable
+fun EditorToolbar(activeTool: EditorTool, onToolSelected: (EditorTool) -> Unit) {
+    NavigationBar {
+        NavigationBarItem(
+            selected = activeTool == EditorTool.TEXT,
+            onClick = { onToolSelected(EditorTool.TEXT) },
+            icon = { Icon(Icons.Filled.TextFields, contentDescription = null) },
+            label = { Text(stringResource(R.string.tool_text)) }
+        )
+        NavigationBarItem(
+            selected = activeTool == EditorTool.ERASER,
+            onClick = { onToolSelected(EditorTool.ERASER) },
+            icon = { Icon(Icons.Filled.AutoFixNormal, contentDescription = null) },
+            label = { Text(stringResource(R.string.tool_eraser)) }
+        )
+        NavigationBarItem(
+            selected = activeTool == EditorTool.FILTERS,
+            onClick = { onToolSelected(EditorTool.FILTERS) },
+            icon = { Icon(Icons.Filled.Tune, contentDescription = null) },
+            label = { Text(stringResource(R.string.tool_filters)) }
+        )
+        NavigationBarItem(
+            selected = activeTool == EditorTool.CUTOUT,
+            onClick = { onToolSelected(EditorTool.CUTOUT) },
+            icon = { Icon(Icons.Filled.AutoAwesome, contentDescription = null) },
+            label = { Text(stringResource(R.string.tool_magic)) }
+        )
+    }
+}
+
+@Composable
+fun FilterPanel(state: EditorUiState, onChange: (Float, Float, Float) -> Unit) {
+    Column(Modifier.padding(20.dp)) {
+        Text(stringResource(R.string.brightness))
+        Slider(value = state.brightness, onValueChange = { onChange(it, state.contrast, state.saturation) }, valueRange = -100f..100f)
+        Text(stringResource(R.string.contrast))
+        Slider(value = state.contrast, onValueChange = { onChange(state.brightness, it, state.saturation) }, valueRange = -100f..100f)
+        Text(stringResource(R.string.saturation))
+        Slider(value = state.saturation, onValueChange = { onChange(state.brightness, state.contrast, it) }, valueRange = -100f..100f)
+    }
+}
+
+@Composable
+fun EditorCanvas(
+    bitmap: Bitmap,
+    textLayers: List<TextLayerData>,
+    activeTool: EditorTool,
+    eraserRadius: Float,
+    onErase: (Float, Float, Boolean) -> Unit,
+    onTextMoved: (String, Float, Float) -> Unit,
+    onTextTap: (String) -> Unit
+) {
+    BoxWithConstraints(
+        Modifier.fillMaxWidth().aspectRatio(bitmap.width.toFloat() / bitmap.height.toFloat())
+    ) {
+        val density = LocalDensity.current
+        val widthPx = with(density) { maxWidth.toPx() }
+        val heightPx = with(density) { maxHeight.toPx() }
+        val scale = bitmap.width / widthPx
+
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (activeTool == EditorTool.ERASER) {
+                        Modifier.pointerInput(eraserRadius) {
+                            detectDragGestures(
+                                onDragStart = { offset -> onErase(offset.x * scale, offset.y * scale, true) },
+                                onDrag = { change, _ -> onErase(change.position.x * scale, change.position.y * scale, false) }
+                            )
+                        }
+                    } else Modifier
+                )
+        )
+
+        textLayers.forEach { layer ->
+            var offsetX by remember(layer.id) { mutableStateOf(layer.xRatio * widthPx) }
+            var offsetY by remember(layer.id) { mutableStateOf(layer.yRatio * heightPx) }
+            Text(
+                text = layer.text,
+                color = androidx.compose.ui.graphics.Color(layer.color),
+                fontSize = with(density) { (bitmap.width * layer.fontSizeRatio / scale / density.density) }.let {
+                    androidx.compose.ui.unit.TextUnit(it, androidx.compose.ui.unit.TextUnitType.Sp)
+                },
+                modifier = Modifier
+                    .offset { IntOffset(offsetX.toInt(), offsetY.toInt()) }
+                    .pointerInput(layer.id) {
+                        detectDragGestures(
+                            onDragStart = { onTextTap(layer.id) },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                offsetX += dragAmount.x
+                                offsetY += dragAmount.y
+                                onTextMoved(layer.id, offsetX / widthPx, offsetY / heightPx)
+                            }
+                        )
+                    }
+            )
+        }
+    }
+}
+
+@Composable
+fun PreviewExportDialog(bitmap: Bitmap, onExport: () -> Unit, onBackToEdit: () -> Unit) {
+    Dialog(onDismissRequest = onBackToEdit) {
+        Surface(shape = RoundedCornerShape(20.dp)) {
+            Column(Modifier.padding(16.dp)) {
+                Text(stringResource(R.string.preview), style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(12.dp))
+                Image(bitmap = bitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                Row {
+                    OutlinedButton(onClick = onBackToEdit, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.back_to_edit))
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Button(onClick = onExport, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.editor_export))
+                    }
+                }
+            }
+        }
+    }
+}
