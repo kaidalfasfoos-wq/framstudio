@@ -22,7 +22,7 @@ import java.io.OutputStream
 object ImageProcessor {
 
     /** يفك تشفير الصورة مع تصغيرها لتفادي OutOfMemory، ويصحح الدوران حسب EXIF */
-    fun decodeBitmap(context: Context, uri: Uri, maxDimension: Int = 2048): Bitmap {
+    fun decodeBitmap(context: Context, uri: Uri, maxDimension: Int = 3000): Bitmap {
         val input = context.contentResolver.openInputStream(uri)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeStream(input, null, bounds)
@@ -144,11 +144,11 @@ object ImageProcessor {
         return result
     }
 
-    /** يحفظ البيتماب في معرض الصور ضمن ألبوم Frame Studio، ويرجع الـ Uri الناتج */
-    fun saveToGallery(context: Context, bitmap: Bitmap, displayName: String): Uri {
+    /** يحفظ البيتماب في معرض الصور ضمن ألبوم Frame Studio حسب مستوى الجودة المختار، ويرجع الـ Uri الناتج */
+    fun saveToGallery(context: Context, bitmap: Bitmap, displayName: String, quality: ExportQuality): Uri {
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
-            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.MIME_TYPE, quality.mimeType)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/FrameStudio")
                 put(MediaStore.Images.Media.IS_PENDING, 1)
@@ -162,7 +162,8 @@ object ImageProcessor {
         try {
             out = resolver.openOutputStream(uri)
                 ?: throw IllegalStateException("تعذر فتح مجرى الكتابة للملف")
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
+            val format = if (quality.losslessPng) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG
+            bitmap.compress(format, quality.jpegQuality, out)
         } finally {
             out?.close()
         }
