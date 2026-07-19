@@ -12,7 +12,7 @@ object LayerRenderer {
         val canvas = Canvas(result)
 
         layers.filter { it.visible }.forEach { layer ->
-            val alpha = (layer.opacity.coerceIn(0f, 1f) * 255).toInt()
+            val alphaInt = (layer.opacity.coerceIn(0f, 1f) * 255).toInt()
             val x = layer.xRatio * result.width
             val y = layer.yRatio * result.height
 
@@ -23,7 +23,7 @@ object LayerRenderer {
                 is EditorLayer.TextLayer -> {
                     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                         color = layer.color
-                        this.alpha = alpha
+                        alpha = alphaInt
                         textSize = result.width * layer.fontSizeRatio * layer.scale
                         textAlign = Paint.Align.CENTER
                     }
@@ -31,7 +31,7 @@ object LayerRenderer {
                 }
                 is EditorLayer.StickerLayer -> {
                     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        this.alpha = alpha
+                        alpha = alphaInt
                         textSize = result.width * layer.sizeRatio * layer.scale
                         textAlign = Paint.Align.CENTER
                     }
