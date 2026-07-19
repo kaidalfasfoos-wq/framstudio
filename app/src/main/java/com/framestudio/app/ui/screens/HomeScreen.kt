@@ -70,6 +70,13 @@ fun HomeScreen(
             desc = stringResource(R.string.card_batch_desc),
             onClick = onOpenBatch
         )
+        Spacer(Modifier.height(16.dp))
+        HomeActionCard(
+            icon = Icons.Filled.Brush,
+            title = stringResource(R.string.editor_title),
+            desc = "أضف نصوص، امسح، وطبّق فلاتر، وفكّك الصورة لطبقات",
+            onClick = onOpenEditor
+        )
     }
 }
 
@@ -107,12 +114,6 @@ private fun HomeActionCard(icon: ImageVector, title: String, desc: String, onCli
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(16.dp))
-        HomeActionCard(
-            icon = Icons.Filled.Brush,
-            title = stringResource(R.string.editor_title),
-            desc = "أضف نصوص، امسح، وطبّق فلاتر، وفكّك الصورة لطبقات",
-            onClick = onOpenEditor
-        )
             }
         }
     }
