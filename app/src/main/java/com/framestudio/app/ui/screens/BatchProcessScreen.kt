@@ -37,7 +37,7 @@ fun BatchProcessScreen(
     var actionMenuExpanded by remember { mutableStateOf(false) }
 
     val pickPhotos = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickMultipleVisualMedia(limit = 30)
+        ActivityResultContracts.PickMultipleVisualMedia(maxItems = 30)
     ) { uris -> if (uris.isNotEmpty()) batchViewModel.setPhotos(uris) }
 
     LaunchedEffect(state.resultUris) {
