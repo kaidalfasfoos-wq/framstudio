@@ -51,6 +51,13 @@
     <string name="batch_apply">تطبيق الأكشن على الكل</string>
     <string name="batch_processing">جاري المعالجة… %1$d من %2$d</string>
 
+    <string name="quality_title">جودة التصدير</string>
+    <string name="quality_hint">من الأصغر (أسرع وأخف حجماً) إلى الأكبر (أعلى جودة، أبطأ)</string>
+    <string name="quality_low">منخفضة</string>
+    <string name="quality_medium">متوسطة</string>
+    <string name="quality_high">عالية</string>
+    <string name="quality_max">قصوى</string>
+
     <string name="result_title">تمت المعالجة بنجاح</string>
     <string name="result_saved_note">تم حفظ الصور في المعرض ضمن ألبوم Frame Studio</string>
     <string name="share_all">مشاركة الكل</string>
