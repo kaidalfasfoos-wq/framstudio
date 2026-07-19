@@ -6,9 +6,10 @@ import android.graphics.Color
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.framestudio.app.data.TextLayerData
+import com.framestudio.app.data.EditorLayer
 import com.framestudio.app.imaging.EraserEngine
 import com.framestudio.app.imaging.ExportQuality
+import com.framestudio.app.imaging.FilterPreset
 import com.framestudio.app.imaging.ImageProcessor
 import com.framestudio.app.imaging.LayerRenderer
 import com.framestudio.app.imaging.SubjectSegmenter
@@ -19,21 +20,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-enum class EditorTool { NONE, TEXT, ERASER, FILTERS, CUTOUT }
+enum class EditorTool { NONE, LAYERS, TEXT, STICKER, ERASER, FILTERS, CROP, CUTOUT }
 
 data class EditorUiState(
     val baseBitmap: Bitmap? = null,
-    val textLayers: List<TextLayerData> = emptyList(),
+    val layers: List<EditorLayer> = emptyList(),
     val selectedLayerId: String? = null,
     val brightness: Float = 0f,
     val contrast: Float = 0f,
     val saturation: Float = 0f,
+    val activeFilterKey: String = "original",
     val eraserRadius: Float = 40f,
     val activeTool: EditorTool = EditorTool.NONE,
     val subjectBitmap: Bitmap? = null,
     val backgroundBitmap: Bitmap? = null,
     val isProcessing: Boolean = false,
-    val statusMessage: String? = null
+    val statusMessage: String? = null,
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false
 )
 
 class EditorViewModel(application: Application) : AndroidViewModel(application) {
@@ -42,13 +46,15 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
 
     private val undoStack = ArrayDeque<Bitmap>()
+    private val redoStack = ArrayDeque<Bitmap>()
 
     fun loadPhoto(uri: Uri) {
         viewModelScope.launch {
-            val bmp = ImageProcessor.decodeBitmap(getApplication(), uri, maxDimension = 2200)
+            val bmp = ImageProcessor.decodeBitmap(getApplication(), uri, maxDimension = 3000)
                 .copy(Bitmap.Config.ARGB_8888, true)
             _uiState.value = EditorUiState(baseBitmap = bmp)
             undoStack.clear()
+            redoStack.clear()
         }
     }
 
@@ -56,30 +62,64 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.value = _uiState.value.copy(activeTool = tool)
     }
 
-    fun addTextLayer(text: String) {
-        val layer = TextLayerData(
-            id = UUID.randomUUID().toString(),
-            text = text, xRatio = 0.5f, yRatio = 0.5f, color = Color.WHITE
-        )
-        _uiState.value = _uiState.value.copy(
-            textLayers = _uiState.value.textLayers + layer,
-            selectedLayerId = layer.id
-        )
+    fun addTextLayer(text: String, color: Int = Color.WHITE) {
+        val layer = EditorLayer.TextLayer(id = UUID.randomUUID().toString(), text = text, color = color)
+        _uiState.value = _uiState.value.copy(layers = _uiState.value.layers + layer, selectedLayerId = layer.id)
     }
 
-    fun updateTextLayer(id: String, xRatio: Float? = null, yRatio: Float? = null) {
+    fun addStickerLayer(emoji: String) {
+        val layer = EditorLayer.StickerLayer(id = UUID.randomUUID().toString(), emoji = emoji)
+        _uiState.value = _uiState.value.copy(layers = _uiState.value.layers + layer, selectedLayerId = layer.id)
+    }
+
+    fun updateLayerTransform(id: String, xRatio: Float? = null, yRatio: Float? = null, scale: Float? = null, rotationDeg: Float? = null) {
         _uiState.value = _uiState.value.copy(
-            textLayers = _uiState.value.textLayers.map {
-                if (it.id == id) it.copy(xRatio = xRatio ?: it.xRatio, yRatio = yRatio ?: it.yRatio) else it
+            layers = _uiState.value.layers.map {
+                if (it.id == id) it.withTransform(
+                    xRatio = xRatio ?: it.xRatio,
+                    yRatio = yRatio ?: it.yRatio,
+                    scale = scale ?: it.scale,
+                    rotationDeg = rotationDeg ?: it.rotationDeg
+                ) else it
             }
         )
     }
 
-    fun deleteTextLayer(id: String) {
+    fun setLayerOpacity(id: String, opacity: Float) {
         _uiState.value = _uiState.value.copy(
-            textLayers = _uiState.value.textLayers.filterNot { it.id == id },
+            layers = _uiState.value.layers.map { if (it.id == id) it.withTransform(opacity = opacity) else it }
+        )
+    }
+
+    fun toggleLayerVisibility(id: String) {
+        _uiState.value = _uiState.value.copy(
+            layers = _uiState.value.layers.map { if (it.id == id) it.withTransform(visible = !it.visible) else it }
+        )
+    }
+
+    fun deleteLayer(id: String) {
+        _uiState.value = _uiState.value.copy(
+            layers = _uiState.value.layers.filterNot { it.id == id },
             selectedLayerId = null
         )
+    }
+
+    fun moveLayerUp(id: String) {
+        val list = _uiState.value.layers.toMutableList()
+        val index = list.indexOfFirst { it.id == id }
+        if (index in 0 until list.size - 1) {
+            val tmp = list[index]; list[index] = list[index + 1]; list[index + 1] = tmp
+            _uiState.value = _uiState.value.copy(layers = list)
+        }
+    }
+
+    fun moveLayerDown(id: String) {
+        val list = _uiState.value.layers.toMutableList()
+        val index = list.indexOfFirst { it.id == id }
+        if (index > 0) {
+            val tmp = list[index]; list[index] = list[index - 1]; list[index - 1] = tmp
+            _uiState.value = _uiState.value.copy(layers = list)
+        }
     }
 
     fun selectLayer(id: String?) {
@@ -92,22 +132,61 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     fun eraseAt(xPx: Float, yPx: Float, pushUndo: Boolean) {
         val bmp = _uiState.value.baseBitmap ?: return
-        if (pushUndo) {
-            if (undoStack.size >= 15) undoStack.removeFirst()
-            undoStack.addLast(bmp.copy(Bitmap.Config.ARGB_8888, true))
-        }
+        if (pushUndo) pushUndoSnapshot(bmp)
         EraserEngine.erase(bmp, xPx, yPx, _uiState.value.eraserRadius)
         _uiState.value = _uiState.value.copy(baseBitmap = bmp)
     }
 
-    fun undoErase() {
-        if (undoStack.isNotEmpty()) {
-            _uiState.value = _uiState.value.copy(baseBitmap = undoStack.removeLast())
-        }
+    fun rotate90() {
+        val bmp = _uiState.value.baseBitmap ?: return
+        pushUndoSnapshot(bmp)
+        _uiState.value = _uiState.value.copy(baseBitmap = ImageProcessor.rotate90(bmp))
+    }
+
+    fun cropToAspect(aspect: String) {
+        val bmp = _uiState.value.baseBitmap ?: return
+        pushUndoSnapshot(bmp)
+        _uiState.value = _uiState.value.copy(baseBitmap = ImageProcessor.cropToAspect(bmp, aspect))
+    }
+
+    private fun pushUndoSnapshot(bmp: Bitmap) {
+        if (undoStack.size >= 12) undoStack.removeFirst()
+        undoStack.addLast(bmp.copy(Bitmap.Config.ARGB_8888, true))
+        redoStack.clear()
+        updateUndoRedoFlags()
+    }
+
+    fun undo() {
+        val current = _uiState.value.baseBitmap ?: return
+        if (undoStack.isEmpty()) return
+        redoStack.addLast(current.copy(Bitmap.Config.ARGB_8888, true))
+        _uiState.value = _uiState.value.copy(baseBitmap = undoStack.removeLast())
+        updateUndoRedoFlags()
+    }
+
+    fun redo() {
+        val current = _uiState.value.baseBitmap ?: return
+        if (redoStack.isEmpty()) return
+        undoStack.addLast(current.copy(Bitmap.Config.ARGB_8888, true))
+        _uiState.value = _uiState.value.copy(baseBitmap = redoStack.removeLast())
+        updateUndoRedoFlags()
+    }
+
+    private fun updateUndoRedoFlags() {
+        _uiState.value = _uiState.value.copy(canUndo = undoStack.isNotEmpty(), canRedo = redoStack.isNotEmpty())
     }
 
     fun setFilters(brightness: Float, contrast: Float, saturation: Float) {
-        _uiState.value = _uiState.value.copy(brightness = brightness, contrast = contrast, saturation = saturation)
+        _uiState.value = _uiState.value.copy(brightness = brightness, contrast = contrast, saturation = saturation, activeFilterKey = "custom")
+    }
+
+    fun applyFilterPreset(preset: FilterPreset) {
+        _uiState.value = _uiState.value.copy(
+            brightness = preset.brightness,
+            contrast = preset.contrast,
+            saturation = preset.saturation,
+            activeFilterKey = preset.nameKey
+        )
     }
 
     fun runMagicDecompose() {
@@ -116,8 +195,8 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.value = _uiState.value.copy(isProcessing = true, statusMessage = null)
             try {
                 val detectedTexts = TextDetector.detect(bmp)
-                val newLayers = detectedTexts.map { d ->
-                    TextLayerData(
+                val newLayers: List<EditorLayer> = detectedTexts.map { d ->
+                    EditorLayer.TextLayer(
                         id = UUID.randomUUID().toString(),
                         text = d.text,
                         xRatio = (d.boxRatio.left + d.boxRatio.right) / 2f,
@@ -129,7 +208,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
                 val segResult = try { SubjectSegmenter.segment(bmp) } catch (e: Exception) { null }
 
                 _uiState.value = _uiState.value.copy(
-                    textLayers = _uiState.value.textLayers + newLayers,
+                    layers = _uiState.value.layers + newLayers,
                     subjectBitmap = segResult?.subjectBitmap,
                     backgroundBitmap = segResult?.backgroundBitmap,
                     isProcessing = false,
@@ -146,7 +225,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         val bmp = _uiState.value.baseBitmap ?: return null
         val s = _uiState.value
         val colorAdjusted = ImageProcessor.adjustColors(bmp, s.brightness, s.contrast, s.saturation)
-        return LayerRenderer.flatten(colorAdjusted, s.textLayers)
+        return LayerRenderer.flatten(colorAdjusted, s.layers)
     }
 
     fun saveExported(bitmap: Bitmap) {
