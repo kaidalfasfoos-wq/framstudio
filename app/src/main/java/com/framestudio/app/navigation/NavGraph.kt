@@ -15,6 +15,7 @@ import com.framestudio.app.viewmodel.FrameViewModel
 
 object Routes {
     const val HOME = "home"
+    const val EDITOR = "editor"
     const val FRAMES = "frames"
     const val FRAME_DESIGNER = "frame_designer"
     const val ACTIONS = "actions"
