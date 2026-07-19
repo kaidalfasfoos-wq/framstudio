@@ -47,6 +47,8 @@ android {
 }
 
 dependencies {
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:segmentation-selfie:16.0.0-beta6")
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("com.google.android.material:material:1.12.0")
