@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Frame Studio</string>
-
     <string name="nav_home">الرئيسية</string>
     <string name="nav_frames">الإطارات</string>
     <string name="nav_actions">الأكشنات</string>
     <string name="nav_batch">معالجة دفعة</string>
-
     <string name="home_title">Frame Studio</string>
     <string name="home_subtitle">صمّم إطاراتك، اصنع أكشناتك، وطبّقها على مجموعة صور دفعة وحدة</string>
     <string name="card_frames_title">معرض الإطارات</string>
@@ -15,7 +13,6 @@
     <string name="card_actions_desc">اصنع مجموعة تعديلات جاهزة لإعادة الاستخدام</string>
     <string name="card_batch_title">معالجة دفعة صور</string>
     <string name="card_batch_desc">طبّق أكشن على أكثر من صورة دفعة وحدة</string>
-
     <string name="frames_empty">لا توجد إطارات بعد. أضف إطار جاهز أو صمم واحد جديد</string>
     <string name="import_frame">استيراد صورة إطار</string>
     <string name="design_frame">تصميم إطار جديد</string>
@@ -23,7 +20,6 @@
     <string name="save">حفظ</string>
     <string name="cancel">إلغاء</string>
     <string name="delete">حذف</string>
-
     <string name="designer_title">تصميم إطار جديد</string>
     <string name="border_width">سماكة الحدود</string>
     <string name="border_color">لون الحدود</string>
@@ -32,7 +28,6 @@
     <string name="corner_rounded">مدوّر</string>
     <string name="corner_deco">زخرفي</string>
     <string name="caption_text">نص أسفل الإطار (اختياري)</string>
-
     <string name="actions_empty">لا يوجد أكشنات بعد. أنشئ أكشن جديد لتبدأ</string>
     <string name="new_action">أكشن جديد</string>
     <string name="action_name">اسم الأكشن</string>
@@ -41,3 +36,32 @@
     <string name="brightness">السطوع</string>
     <string name="contrast">التباين</string>
     <string name="saturation">التشبع</string>
+    <string name="aspect_ratio">نسبة القص</string>
+    <string name="watermark">توقيع نصي (اختياري)</string>
+    <string name="preview">معاينة</string>
+    <string name="batch_select_photos">اختر الصور</string>
+    <string name="batch_selected_count">تم اختيار %1$d صورة</string>
+    <string name="batch_choose_action">اختر الأكشن</string>
+    <string name="batch_apply">تطبيق الأكشن على الكل</string>
+    <string name="batch_processing">جاري المعالجة… %1$d من %2$d</string>
+    <string name="quality_title">جودة التصدير</string>
+    <string name="quality_hint">من الأصغر (أسرع وأخف حجماً) إلى الأكبر (أعلى جودة، أبطأ)</string>
+    <string name="quality_low">منخفضة</string>
+    <string name="quality_medium">متوسطة</string>
+    <string name="quality_high">عالية</string>
+    <string name="quality_max">قصوى</string>
+    <string name="result_title">تمت المعالجة بنجاح</string>
+    <string name="result_saved_note">تم حفظ الصور في المعرض ضمن ألبوم Frame Studio</string>
+    <string name="share_all">مشاركة الكل</string>
+    <string name="done">تم</string>
+    <string name="editor_title">محرر الصور</string>
+    <string name="editor_pick_photo">اختر صورة للتحرير</string>
+    <string name="editor_export">تصدير</string>
+    <string name="add_text">إضافة نص</string>
+    <string name="tool_text">نص</string>
+    <string name="tool_eraser">ممحاة</string>
+    <string name="tool_filters">فلاتر</string>
+    <string name="tool_magic">تفكيك ذكي</string>
+    <string name="back_to_edit">رجوع للتعديل</string>
+    <string name="preview_before_export">معاينة قبل التصدير</string>
+</resources>
