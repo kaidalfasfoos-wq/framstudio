@@ -161,6 +161,7 @@ object ImageProcessor {
         var out: OutputStream? = null
         try {
             out = resolver.openOutputStream(uri)
+                ?: throw IllegalStateException("تعذر فتح مجرى الكتابة للملف")
             bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
         } finally {
             out?.close()
