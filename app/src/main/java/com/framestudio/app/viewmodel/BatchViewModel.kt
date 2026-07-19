@@ -8,6 +8,7 @@ import com.framestudio.app.data.ActionEntity
 import com.framestudio.app.data.Repository
 import com.framestudio.app.imaging.BatchProcessor
 import com.framestudio.app.imaging.BatchStep
+import com.framestudio.app.imaging.ExportQuality
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 data class BatchUiState(
     val selectedPhotos: List<Uri> = emptyList(),
     val selectedAction: ActionEntity? = null,
+    val quality: ExportQuality = ExportQuality.HIGH,
     val isProcessing: Boolean = false,
     val done: Int = 0,
     val total: Int = 0,
@@ -39,6 +41,10 @@ class BatchViewModel(
         _uiState.value = _uiState.value.copy(selectedAction = action)
     }
 
+    fun setQuality(quality: ExportQuality) {
+        _uiState.value = _uiState.value.copy(quality = quality)
+    }
+
     fun runBatch() {
         val state = _uiState.value
         val action = state.selectedAction ?: return
@@ -48,7 +54,7 @@ class BatchViewModel(
             _uiState.value = state.copy(isProcessing = true, done = 0, total = state.selectedPhotos.size, error = null)
             val frameFilePath = action.frameId?.let { repository.getFrame(it)?.filePath }
 
-            BatchProcessor.run(getApplication(), state.selectedPhotos, action, frameFilePath)
+            BatchProcessor.run(getApplication(), state.selectedPhotos, action, frameFilePath, state.quality)
                 .collect { step ->
                     when (step) {
                         is BatchStep.Progress -> _uiState.value =
