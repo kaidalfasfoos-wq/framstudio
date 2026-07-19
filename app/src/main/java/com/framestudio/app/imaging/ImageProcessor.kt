@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
 import android.net.Uri
@@ -15,13 +16,8 @@ import android.provider.MediaStore
 import androidx.exifinterface.media.ExifInterface
 import java.io.OutputStream
 
-/**
- * كل عمليات معالجة الصورة الأساسية: فك التشفير الآمن للذاكرة، تعديل السطوع/التباين/التشبع،
- * القص حسب نسبة معينة، تركيب إطار فوق الصورة، وحفظ الناتج في المعرض.
- */
 object ImageProcessor {
 
-    /** يفك تشفير الصورة مع تصغيرها لتفادي OutOfMemory، ويصحح الدوران حسب EXIF */
     fun decodeBitmap(context: Context, uri: Uri, maxDimension: Int = 4500): Bitmap {
         val input = context.contentResolver.openInputStream(uri)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -39,7 +35,6 @@ object ImageProcessor {
             ?: throw IllegalStateException("تعذر قراءة الصورة")
         input2?.close()
 
-        // تصحيح الدوران حسب بيانات EXIF
         try {
             val exifStream = context.contentResolver.openInputStream(uri)
             if (exifStream != null) {
@@ -55,30 +50,26 @@ object ImageProcessor {
                     else -> 0f
                 }
                 if (rotation != 0f) {
-                    val matrix = android.graphics.Matrix().apply { postRotate(rotation) }
+                    val matrix = Matrix().apply { postRotate(rotation) }
                     val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
                     if (rotated != bitmap) bitmap = rotated
                 }
             }
-        } catch (_: Exception) { /* تجاهل مشاكل EXIF غير الحرجة */ }
+        } catch (_: Exception) { }
 
         return bitmap
     }
 
-    /** يطبّق سطوع/تباين/تشبع عبر ColorMatrix — القيم بمدى -100..100 */
     fun adjustColors(src: Bitmap, brightness: Float, contrast: Float, saturation: Float): Bitmap {
         val result = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(result)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
         val cm = ColorMatrix()
-
-        // تشبع
         val satMatrix = ColorMatrix()
         satMatrix.setSaturation(1f + saturation / 100f)
         cm.postConcat(satMatrix)
 
-        // تباين وسطوع
         val c = 1f + contrast / 100f
         val b = brightness / 100f * 255f
         val translate = (-0.5f * c + 0.5f) * 255f + b
@@ -97,7 +88,6 @@ object ImageProcessor {
         return result
     }
 
-    /** يقص الصورة لنسبة معيّنة من المنتصف. aspect بصيغة "original" أو "1:1" أو "4:5" أو "16:9" */
     fun cropToAspect(src: Bitmap, aspect: String): Bitmap {
         if (aspect == "original") return src
         val parts = aspect.split(":")
@@ -116,7 +106,12 @@ object ImageProcessor {
         }
     }
 
-    /** يركّب صورة إطار (بخلفية شفافة) فوق الصورة الأساسية بنفس المقاس */
+    /** يدوّر الصورة 90 درجة باتجاه عقارب الساعة */
+    fun rotate90(src: Bitmap): Bitmap {
+        val matrix = Matrix().apply { postRotate(90f) }
+        return Bitmap.createBitmap(src, 0, 0, src.width, src.height, matrix, true)
+    }
+
     fun applyFrame(photo: Bitmap, frame: Bitmap): Bitmap {
         val result = Bitmap.createBitmap(photo.width, photo.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(result)
@@ -126,7 +121,6 @@ object ImageProcessor {
         return result
     }
 
-    /** يضيف توقيع نصي بالزاوية السفلية */
     fun addWatermark(src: Bitmap, text: String): Bitmap {
         val result = src.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
@@ -144,7 +138,6 @@ object ImageProcessor {
         return result
     }
 
-    /** يحفظ البيتماب في معرض الصور ضمن ألبوم Frame Studio حسب مستوى الجودة المختار، ويرجع الـ Uri الناتج */
     fun saveToGallery(context: Context, bitmap: Bitmap, displayName: String, quality: ExportQuality): Uri {
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
