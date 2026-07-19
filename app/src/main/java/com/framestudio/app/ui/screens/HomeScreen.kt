@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.DynamicForm
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,7 +23,8 @@ import com.framestudio.app.R
 fun HomeScreen(
     onOpenFrames: () -> Unit,
     onOpenActions: () -> Unit,
-    onOpenBatch: () -> Unit
+    onOpenBatch: () -> Unit,
+    onOpenEditor: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -104,6 +106,13 @@ private fun HomeActionCard(icon: ImageVector, title: String, desc: String, onCli
                     textAlign = TextAlign.Right,
                     modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(Modifier.height(16.dp))
+        HomeActionCard(
+            icon = Icons.Filled.Brush,
+            title = stringResource(R.string.editor_title),
+            desc = "أضف نصوص، امسح، وطبّق فلاتر، وفكّك الصورة لطبقات",
+            onClick = onOpenEditor
+        )
             }
         }
     }
