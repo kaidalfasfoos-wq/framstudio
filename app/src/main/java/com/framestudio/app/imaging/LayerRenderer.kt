@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import com.framestudio.app.data.EditorLayer
 
-/** يدمج الصورة الأساسية مع كل الطبقات (نصوص/ملصقات) المرئية بترتيبها الصحيح، فوق إطار اختياري */
+/** يدمج الصورة الأساسية مع كل الطبقات، بنفس مرجعية التمركز المستخدمة بمعاينة المحرر الحية */
 object LayerRenderer {
     fun flatten(base: Bitmap, layers: List<EditorLayer>, frame: Bitmap? = null): Bitmap {
         val result = base.copy(Bitmap.Config.ARGB_8888, true)
@@ -27,7 +27,9 @@ object LayerRenderer {
                         textSize = result.width * layer.fontSizeRatio * layer.scale
                         textAlign = Paint.Align.CENTER
                     }
-                    canvas.drawText(layer.text, x, y, paint)
+                    // نفس منطق التمركز الرأسي المستخدم بالمعاينة الحية (وسط النص فعلياً، مو خط الأساس)
+                    val fm = paint.fontMetrics
+                    canvas.drawText(layer.text, x, y - (fm.ascent + fm.descent) / 2, paint)
                 }
                 is EditorLayer.StickerLayer -> {
                     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
