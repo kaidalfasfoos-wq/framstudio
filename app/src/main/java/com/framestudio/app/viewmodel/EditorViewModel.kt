@@ -32,6 +32,7 @@ data class EditorUiState(
     val activeFilterKey: String = "original",
     val eraserRadius: Float = 40f,
     val activeTool: EditorTool = EditorTool.NONE,
+    val pendingCropAspect: String? = null,
     val subjectBitmap: Bitmap? = null,
     val backgroundBitmap: Bitmap? = null,
     val isProcessing: Boolean = false,
@@ -59,7 +60,8 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun setTool(tool: EditorTool) {
-        _uiState.value = _uiState.value.copy(activeTool = tool)
+        // الخروج من أداة القص بدون تأكيد يلغي أي قص معلّق
+        _uiState.value = _uiState.value.copy(activeTool = tool, pendingCropAspect = if (tool == EditorTool.CROP) _uiState.value.pendingCropAspect else null)
     }
 
     fun addTextLayer(text: String, color: Int = Color.WHITE) {
@@ -143,10 +145,23 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.value = _uiState.value.copy(baseBitmap = ImageProcessor.rotate90(bmp))
     }
 
-    fun cropToAspect(aspect: String) {
+    /** يعرض معاينة القص فقط، ما يعدّل الصورة الفعلية إلا بعد تأكيد confirmCrop() */
+    fun setPendingCropAspect(aspect: String) {
+        _uiState.value = _uiState.value.copy(pendingCropAspect = aspect)
+    }
+
+    fun cancelCrop() {
+        _uiState.value = _uiState.value.copy(pendingCropAspect = null)
+    }
+
+    fun confirmCrop() {
         val bmp = _uiState.value.baseBitmap ?: return
+        val aspect = _uiState.value.pendingCropAspect ?: return
         pushUndoSnapshot(bmp)
-        _uiState.value = _uiState.value.copy(baseBitmap = ImageProcessor.cropToAspect(bmp, aspect))
+        _uiState.value = _uiState.value.copy(
+            baseBitmap = ImageProcessor.cropToAspect(bmp, aspect),
+            pendingCropAspect = null
+        )
     }
 
     private fun pushUndoSnapshot(bmp: Bitmap) {
