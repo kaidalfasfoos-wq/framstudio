@@ -68,7 +68,13 @@ fun EditorScreen(
                 Column {
                     when (state.activeTool) {
                         EditorTool.FILTERS -> FilterPresetsBar(activeKey = state.activeFilterKey, onSelect = { viewModel.applyFilterPreset(it) })
-                        EditorTool.CROP -> CropRotateBar(onCrop = { viewModel.cropToAspect(it) }, onRotate = { viewModel.rotate90() })
+                        EditorTool.CROP -> CropRotateBar(
+                            pendingAspect = state.pendingCropAspect,
+                            onPickAspect = { viewModel.setPendingCropAspect(it) },
+                            onConfirm = { viewModel.confirmCrop() },
+                            onCancel = { viewModel.cancelCrop() },
+                            onRotate = { viewModel.rotate90() }
+                        )
                         else -> {}
                     }
                     EditorToolbar(
@@ -99,6 +105,10 @@ fun EditorScreen(
                     selectedLayerId = state.selectedLayerId,
                     activeTool = state.activeTool,
                     eraserRadius = state.eraserRadius,
+                    brightness = state.brightness,
+                    contrast = state.contrast,
+                    saturation = state.saturation,
+                    pendingCropAspect = state.pendingCropAspect,
                     onErase = { x, y, isStart -> viewModel.eraseAt(x, y, isStart) },
                     onLayerTransform = { id, xr, yr, sc, rot -> viewModel.updateLayerTransform(id, xr, yr, sc, rot) },
                     onLayerTap = { id -> viewModel.selectLayer(id) }
