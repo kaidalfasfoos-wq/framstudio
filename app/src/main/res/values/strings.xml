@@ -77,4 +77,5 @@
     <string name="filter_cool">بارد</string>
     <string name="filter_dramatic">درامي</string>
     <string name="filter_soft">ناعم</string>
+    <string name="apply_crop">تطبيق القص</string>
 </resources>
